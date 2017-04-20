@@ -11,6 +11,7 @@ import DeleteIcon from 'material-ui/svg-icons/navigation/close'
 import moment from 'moment';
 
 import EditTaskDialog from './edit_task_dialog';
+import { TaskService } from '../../../imports/api/task-service.js';
 
 const tableData = [
     {
@@ -43,21 +44,21 @@ export default class Task extends Component {
         this.state = {
             field: '',
             tableData: tableData,
-            editTask: false,
+            openTask: false,
             data: {}
         };
     }
 
     openDialog(row) {
         this.setState({
-            editTask: true,
+            openTask: true,
             data: row
         });
     }
 
     closeDialog() {
         this.setState({
-            editTask: false
+            openTask: false
         });
     }
 
@@ -89,7 +90,7 @@ export default class Task extends Component {
         });
 
         task.input.value = '';
-       // datestart.refs.input.input.value = null;
+        // datestart.refs.input.input.value = null;
     }
 
     render() {
@@ -108,7 +109,7 @@ export default class Task extends Component {
                             <small style={{ color: '#bbb' }}>***<i> Minimum of 3 characters</i></small>
                         </div>
                         <div style={{ marginTop: '24px', flex: '1', paddingRight: "15px", width: '100%' }}>
-                            <DatePicker ref="datestart" hintText="Date Start" />
+                            <DatePicker ref="datestart" hintText="Date Start" shouldDisableDate={this.disableWeekends} />
                         </div>
                         <div style={{ marginTop: '24px', flex: '1' }}>
                             <RaisedButton
@@ -164,6 +165,11 @@ export default class Task extends Component {
                         </TableBody>
                     </Table>
                 </Paper>
+                <EditTaskDialog
+                    open={this.state.openTask}
+                    close={this.closeDialog.bind(this)}
+                    data={this.state.data}
+                />
             </div>
         )
     }

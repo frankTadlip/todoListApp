@@ -12,27 +12,34 @@ class EditTaskDialog extends React.Component {
         return date.getDay() === 0 || date.getDay() === 6;
     }
 
+    changeTask() {
+        const { task } = this.refs;
+        const { data, close } = this.props;
+
+        data.task = task.input.value;
+        close();
+    }
+
     render() {
 
         const { open, close, data } = this.props;
+
 
         const actions = [
             <FlatButton
                 label="Cancel"
                 primary={true}
                 onTouchTap={close}
-
             />,
             <FlatButton
                 label="Submit"
                 primary={true}
                 keyboardFocused={true}
-
+                onTouchTap={this.changeTask.bind(this)}
             />,
         ];
 
         return (
-
             <div>
                 <Dialog
                     title="Update Task"
@@ -46,10 +53,11 @@ class EditTaskDialog extends React.Component {
                         hintText="Specify Task"
                         floatingLabelText="Update Task"
                         fullWidth={true}
-                        ref='data'
+                        ref='task'
+                        defaultValue={data ? data.task : null}
                     />
 
-                    <DatePicker hintText="Date Start" shouldDisableDate={this.disableWeekends} />
+                    <DatePicker value={data.dateStart} hintText="Date Start" shouldDisableDate={this.disableWeekends} />
 
                     <DatePicker hintText="Date Finished" shouldDisableDate={this.disableWeekends} />
                 </Dialog>
