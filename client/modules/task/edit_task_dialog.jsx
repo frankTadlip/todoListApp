@@ -5,11 +5,23 @@ import TextField from 'material-ui/TextField';
 import FlatButton from 'material-ui/FlatButton';
 import RaisedButton from 'material-ui/RaisedButton';
 import DatePicker from 'material-ui/DatePicker';
+import moment from 'moment';
 
 class EditTaskDialog extends React.Component {
 
     disableWeekends(date) {
         return date.getDay() === 0 || date.getDay() === 6;
+    }
+
+    changeTask() {
+        const { task, datestart, datefinished } = this.refs;
+        const { data, close } = this.props;
+
+        data.task = task.input.value;
+        data.dateStart = moment(datestart.state.date).format('MM/DD/YYYY')
+        data.dateFinished = moment(datefinished.state.date).format('MM/DD/YYYY')
+
+        close();
     }
 
     render() {
@@ -21,18 +33,16 @@ class EditTaskDialog extends React.Component {
                 label="Cancel"
                 primary={true}
                 onTouchTap={close}
-
             />,
             <FlatButton
                 label="Submit"
                 primary={true}
                 keyboardFocused={true}
-
+                onTouchTap={this.changeTask.bind(this)}
             />,
         ];
 
         return (
-
             <div>
                 <Dialog
                     title="Update Task"
@@ -46,12 +56,13 @@ class EditTaskDialog extends React.Component {
                         hintText="Specify Task"
                         floatingLabelText="Update Task"
                         fullWidth={true}
-                        ref='data'
+                        ref='task'
+                        defaultValue={data ? data.task : null}
                     />
 
-                    <DatePicker hintText="Date Start" shouldDisableDate={this.disableWeekends} />
+                    <DatePicker ref="datestart" value={data.dateStart} hintText="Date Start" shouldDisableDate={this.disableWeekends} />
 
-                    <DatePicker hintText="Date Finished" shouldDisableDate={this.disableWeekends} />
+                    <DatePicker ref="datefinished" value={data.dateFinished} hintText="Date Finished" shouldDisableDate={this.disableWeekends} />
                 </Dialog>
             </div>
         );

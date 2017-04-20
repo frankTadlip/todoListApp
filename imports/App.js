@@ -2,7 +2,7 @@ import React from 'react';
 import injectTapEventPlugin from 'react-tap-event-plugin';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 
-import Task from '../client/modules/task/Task';
+import TaskContainer from '../client/modules/task/TaskContainer';
 
 injectTapEventPlugin();
 
@@ -12,7 +12,7 @@ export default class App extends React.Component {
             <MuiThemeProvider>
                 <div>
                     <h1>Todo List Meteor + React</h1>
-                    <Task />
+                    <TaskContainer />
                 </div>
             </MuiThemeProvider>
         )

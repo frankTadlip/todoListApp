@@ -1,4 +1,5 @@
 import React, { Component, PropTypes } from 'react';
+import { createContainer } from 'meteor/react-meteor-data';
 
 import Paper from 'material-ui/Paper';
 import TextField from 'material-ui/TextField';
@@ -11,30 +12,8 @@ import DeleteIcon from 'material-ui/svg-icons/navigation/close'
 import moment from 'moment';
 
 import EditTaskDialog from './edit_task_dialog';
+import { TaskService } from '../../../imports/api/task-service.js';
 
-const tableData = [
-    {
-        selected: false,
-        task: 'Create Module',
-        dateStart: '',
-        dateFinished: '',
-        status: 'Inprogress',
-    },
-    {
-        selected: false,
-        task: 'Routing',
-        dateStart: '',
-        dateFinished: '',
-        status: 'Inprogress',
-    },
-    {
-        selected: false,
-        task: 'Create Actions',
-        dateStart: '',
-        dateFinished: '',
-        status: 'Inprogress',
-    }
-];
 
 export default class Task extends Component {
     constructor(props) {
@@ -42,23 +21,32 @@ export default class Task extends Component {
 
         this.state = {
             field: '',
-            tableData: tableData,
-            editTask: false,
+            tableData: [],
+            openTask: false,
             data: {}
         };
     }
 
+    getTask(){
+        return TaskService.find({}).fetch();
+    }
+
     openDialog(row) {
         this.setState({
-            editTask: true,
+            openTask: true,
             data: row
         });
     }
 
     closeDialog() {
         this.setState({
-            editTask: false
+            openTask: false
         });
+    }
+
+    removeTask(data, index){
+        this.state.tableData.splice(1, index)
+        TaskService.remove(data._id);
     }
 
     disableWeekends(date) {
@@ -78,21 +66,30 @@ export default class Task extends Component {
 
         var tasks = {
             task: task.input.value,
-            dateStart: moment(datestart.state.date).format('MM/DD/YYYY')
+            dateStart: moment(datestart.state.date).format('MM/DD/YYYY'),
+            dateFinished: null,
+            status: 'Inprogress',
+            selected: false
         }
 
-        tableData.unshift(tasks);
+        tableData.push(tasks);
 
         this.setState({
             tableData: tableData,
             field: ''
         });
 
+        TaskService.insert(tasks);
+
         task.input.value = '';
-       // datestart.refs.input.input.value = null;
+    }
+
+    componentWillReceiveProps(nextProps) {
+        this.setState({ tableData: nextProps.tasks })
     }
 
     render() {
+
         return (
             <div>
                 <form >
@@ -108,7 +105,7 @@ export default class Task extends Component {
                             <small style={{ color: '#bbb' }}>***<i> Minimum of 3 characters</i></small>
                         </div>
                         <div style={{ marginTop: '24px', flex: '1', paddingRight: "15px", width: '100%' }}>
-                            <DatePicker ref="datestart" hintText="Date Start" />
+                            <DatePicker ref="datestart" hintText="Date Start" shouldDisableDate={this.disableWeekends} />
                         </div>
                         <div style={{ marginTop: '24px', flex: '1' }}>
                             <RaisedButton
@@ -144,17 +141,17 @@ export default class Task extends Component {
                             showRowHover={true}
                             stripedRows={false}
                         >
-                            {tableData.map((row, index) => (
+                            {this.state.tableData.map((row, index) => (
                                 <TableRow key={index} selected={row.selected}>
                                     <TableRowColumn>{row.task}</TableRowColumn>
-                                    <TableRowColumn>{row.dateStart ? row.dateStart : '--'}</TableRowColumn>
-                                    <TableRowColumn>{row.dateFinished ? row.dateFinished : '--'}</TableRowColumn>
+                                    <TableRowColumn>{row.dateStart ? moment(row.dateStart).format('MM-DD-YYYY') : '--'}</TableRowColumn>
+                                    <TableRowColumn>{row.dateFinished ? moment(row.dateFinished).format('MM-DD-YYYY') : '--'}</TableRowColumn>
                                     <TableRowColumn style={{ textAlign: 'right' }}>
                                         <div>
                                             <IconButton onTouchTap={this.openDialog.bind(this, row)}>
                                                 <EditIcon />
                                             </IconButton>
-                                            <IconButton >
+                                            <IconButton onTouchTap={this.removeTask.bind(this, row, index)}>
                                                 <DeleteIcon />
                                             </IconButton>
                                         </div>
@@ -164,6 +161,11 @@ export default class Task extends Component {
                         </TableBody>
                     </Table>
                 </Paper>
+                <EditTaskDialog
+                    open={this.state.openTask}
+                    close={this.closeDialog.bind(this)}
+                    data={this.state.data}
+                />
             </div>
         )
     }
