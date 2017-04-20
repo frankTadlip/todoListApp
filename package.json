@@ -1,0 +1,16 @@
+{
+  "name": "todoListApp",
+  "private": true,
+  "scripts": {
+    "start": "meteor run -p 5000"
+  },
+  "dependencies": {
+    "babel-runtime": "^6.20.0",
+    "material-ui": "^0.17.4",
+    "meteor-node-stubs": "~0.2.4",
+    "moment": "^2.18.1",
+    "react": "^15.5.4",
+    "react-dom": "^15.5.4",
+    "react-tap-event-plugin": "^2.0.1"
+  }
+}
