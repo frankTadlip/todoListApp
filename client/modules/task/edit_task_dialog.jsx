@@ -28,6 +28,7 @@ class EditTaskDialog extends React.Component {
 
         const { open, close, data } = this.props;
 
+
         const actions = [
             <FlatButton
                 label="Cancel"
