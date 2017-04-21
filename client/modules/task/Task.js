@@ -12,6 +12,7 @@ import DeleteIcon from 'material-ui/svg-icons/navigation/close'
 import moment from 'moment';
 
 import EditTaskDialog from './edit_task_dialog';
+import DeleteDialogComponent from '../core/shared-components/delete_dialog_component';
 import { TaskService } from '../../../imports/api/task-service.js';
 
 
@@ -23,11 +24,18 @@ export default class Task extends Component {
             field: '',
             tableData: [],
             openTask: false,
+            openDeleteDialog: false,
             data: {}
         };
     }
 
-    getTask(){
+    deleteData(id) {
+        // delete data based on index
+        TaskService.remove(id);
+        this.closeDialog();
+    }
+
+    getTask() {
         return TaskService.find({}).fetch();
     }
 
@@ -40,15 +48,12 @@ export default class Task extends Component {
 
     closeDialog() {
         this.setState({
-            openTask: false
+            openTask: false,
+            openDeleteDialog: false
         });
     }
 
-    removeTask(data, index){
-        this.state.tableData.splice(1, index)
-        TaskService.remove(data._id);
-    }
-
+  
     disableWeekends(date) {
         return date.getDay() === 0 || date.getDay() === 6;
     }
@@ -60,22 +65,21 @@ export default class Task extends Component {
         });
     }
 
+    // ADD EDIT TASK
     addTask() {
 
         const { task, datestart } = this.refs;
 
         var tasks = {
             task: task.input.value,
-            dateStart: moment(datestart.state.date).format('MM/DD/YYYY'),
+            dateStart: datestart.state.date,
             dateFinished: null,
             status: 'Inprogress',
             selected: false
         }
 
-        tableData.push(tasks);
-
         this.setState({
-            tableData: tableData,
+            tableData: [task, ...this.state.tableData],
             field: ''
         });
 
@@ -84,6 +88,14 @@ export default class Task extends Component {
         task.input.value = '';
     }
 
+    removeTask(data, index) {
+        this.setState({
+            openDeleteDialog: true,
+            data: data
+        })
+    }
+    //
+    
     componentWillReceiveProps(nextProps) {
         this.setState({ tableData: nextProps.tasks })
     }
@@ -123,7 +135,7 @@ export default class Task extends Component {
                     <Table
                         fixedHeader={true}
                         selectable={true}
-                        multiSelectable={true}>
+                        multiSelectable={false}>
                         <TableHeader
                             displaySelectAll={true}
                             adjustForCheckbox={true}
@@ -157,8 +169,11 @@ export default class Task extends Component {
                                         </div>
                                     </TableRowColumn>
                                 </TableRow>
+
                             ))}
+
                         </TableBody>
+
                     </Table>
                 </Paper>
                 <EditTaskDialog
@@ -166,6 +181,14 @@ export default class Task extends Component {
                     close={this.closeDialog.bind(this)}
                     data={this.state.data}
                 />
+                <DeleteDialogComponent
+                    open={this.state.openDeleteDialog}
+                    close={this.closeDialog.bind(this)}
+                    data={this.state.data}
+                    otherMessage={this.state.data.task + ' on ' + moment(this.state.data.dateStart).format("MM/DD/YYYY") }
+                    deleteSelectedTask={this.deleteData.bind(this, this.state.data._id)}
+                />
+
             </div>
         )
     }

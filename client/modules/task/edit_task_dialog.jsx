@@ -7,7 +7,17 @@ import RaisedButton from 'material-ui/RaisedButton';
 import DatePicker from 'material-ui/DatePicker';
 import moment from 'moment';
 
+import { TaskService } from '../../../imports/api/task-service.js';
+
 class EditTaskDialog extends React.Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            dateStart: null,
+            dateFinished: null
+        }
+    }
 
     disableWeekends(date) {
         return date.getDay() === 0 || date.getDay() === 6;
@@ -18,16 +28,54 @@ class EditTaskDialog extends React.Component {
         const { data, close } = this.props;
 
         data.task = task.input.value;
-        data.dateStart = moment(datestart.state.date).format('MM/DD/YYYY')
-        data.dateFinished = moment(datefinished.state.date).format('MM/DD/YYYY')
+        data.dateStart = datestart.state.date
+        data.dateFinished = datefinished.state.date
+
+        if(data.dateFinished != null) {
+            data.status = "Complete";
+            data.selected = true;            
+        }
+        
+
+        var id = data._id;
+
+        TaskService.update({ _id: id },
+            {
+                $set: {
+                    task: data.task,
+                    dateStart: data.dateStart,
+                    dateFinished: data.dateFinished,
+                    status: data.status,
+                    selected: data.selected
+                }
+            });
 
         close();
     }
 
+    handleChangeDateStart(event, date) {
+        this.setState({
+            dateStart: date,
+        });
+    }
+
+    handleChangeDateFinished(event, date) {
+        this.setState({
+            dateFinished: date,
+        });
+    }
+
+    componentWillReceiveProps(nextProps) {
+        const { dateStart, dateFinished } = nextProps.data;
+
+        this.setState({
+            dateStart: dateStart,
+            dateFinished: dateFinished
+        })
+    }
+
     render() {
-
         const { open, close, data } = this.props;
-
 
         const actions = [
             <FlatButton
@@ -61,9 +109,18 @@ class EditTaskDialog extends React.Component {
                         defaultValue={data ? data.task : null}
                     />
 
-                    <DatePicker ref="datestart" value={data.dateStart} hintText="Date Start" shouldDisableDate={this.disableWeekends} />
+                    <DatePicker ref="datestart"
+                        value={this.state.dateStart}
+                        hintText="Date Start"
+                        shouldDisableDate={this.disableWeekends}
+                        onChange={this.handleChangeDateStart.bind(this)} />
 
-                    <DatePicker ref="datefinished" value={data.dateFinished} hintText="Date Finished" shouldDisableDate={this.disableWeekends} />
+                    <DatePicker ref="datefinished"
+                        value={this.state.dateFinished}
+                        hintText="Date Finished"
+                        shouldDisableDate={this.disableWeekends}
+                        onChange={this.handleChangeDateFinished.bind(this)} />
+
                 </Dialog>
             </div>
         );
