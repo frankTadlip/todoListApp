@@ -20,7 +20,7 @@ export default class DeleteDialogComponent extends React.Component {
     }
 
     render(){
-        const { open, close, otherMessage, message, data, deleteSelectedTask } = this.props;
+        const { open, close, otherMessage, message, data, deleteSelected } = this.props;
 
         const actions = [
             <FlatButton
@@ -32,7 +32,7 @@ export default class DeleteDialogComponent extends React.Component {
                 label="Submit"
                 secondary={true}
                 keyboardFocused={true}
-                onTouchTap={deleteSelectedTask}
+                onTouchTap={deleteSelected}
             />,
         ];
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Meteor } from 'meteor/meteor';
 
 import Dialog from 'material-ui/Dialog';
 import TextField from 'material-ui/TextField';
@@ -6,8 +7,6 @@ import FlatButton from 'material-ui/FlatButton';
 import RaisedButton from 'material-ui/RaisedButton';
 import DatePicker from 'material-ui/DatePicker';
 import moment from 'moment';
-
-import { TaskService } from '../../../imports/api/task-service.js';
 
 class EditTaskDialog extends React.Component {
     constructor(props) {
@@ -36,19 +35,10 @@ class EditTaskDialog extends React.Component {
             data.selected = true;            
         }
         
-
-        var id = data._id;
-
-        TaskService.update({ _id: id },
-            {
-                $set: {
-                    task: data.task,
-                    dateStart: data.dateStart,
-                    dateFinished: data.dateFinished,
-                    status: data.status,
-                    selected: data.selected
-                }
-            });
+        Meteor.call("task.updateTask", data, (err) => {
+             if (err != undefined) 
+                console.log(err);
+        })
 
         close();
     }

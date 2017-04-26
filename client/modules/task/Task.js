@@ -1,19 +1,25 @@
 import React, { Component, PropTypes } from 'react';
 import { createContainer } from 'meteor/react-meteor-data';
+import { Link, browserHistory } from 'react-router';
+import { Meteor } from 'meteor/meteor';
 
 import Paper from 'material-ui/Paper';
 import TextField from 'material-ui/TextField';
 import DatePicker from 'material-ui/DatePicker';
 import RaisedButton from 'material-ui/RaisedButton';
+import FlatButton from 'material-ui/FlatButton';
+import Snackbar from 'material-ui/Snackbar';
 import { Table, TableBody, TableFooter, TableHeader, TableHeaderColumn, TableRow, TableRowColumn } from 'material-ui/Table';
 import IconButton from 'material-ui/IconButton';
-import EditIcon from 'material-ui/svg-icons/image/edit'
-import DeleteIcon from 'material-ui/svg-icons/navigation/close'
+import EditIcon from 'material-ui/svg-icons/image/edit';
+import DeleteIcon from 'material-ui/svg-icons/navigation/close';
+import Back from 'material-ui/svg-icons/hardware/keyboard-backspace';
 import moment from 'moment';
 
 import EditTaskDialog from './edit_task_dialog';
 import DeleteDialogComponent from '../core/shared-components/delete_dialog_component';
 import { TaskService } from '../../../imports/api/task-service.js';
+import { PersonService } from '../../../imports/api/person-service.js';
 
 
 export default class Task extends Component {
@@ -25,19 +31,84 @@ export default class Task extends Component {
             tableData: [],
             openTask: false,
             openDeleteDialog: false,
-            data: {}
+            openSnakbar: false,
+            snakbarMessage: '',
+            data: {},
+            fullname: ''
         };
+    }
+
+    disableWeekends(date) {
+        return date.getDay() === 0 || date.getDay() === 6;
+    }
+
+    checkField() {
+        const { task } = this.refs;
+        this.setState({
+            field: task.input.value
+        });
+    }
+
+    // ADD EDIT TASK
+    addTask() {
+
+        const { _id } = this.props.params;
+        const { task, datestart } = this.refs;
+        var found = false;
+
+        for (var a in this.state.tableData) {
+            var b = this.state.tableData[a];
+
+            if (b.task.toLowerCase() == task.input.value.toLowerCase()) {
+                found = true;
+            }
+        }
+
+        var tasks = {
+            task: task.input.value,
+            dateStart: datestart.state.date,
+            dateFinished: null,
+            status: 'Inprogress',
+            selected: false,
+            personId: _id
+        }
+
+        if (found == false) {
+            this.setState({
+                field: '',
+                openSnakbar: true,
+                snakbarMessage: 'Successfully Save'
+            });
+
+            // TaskService.insert(tasks);
+            Meteor.call("task.addTask", tasks, (err) => { });
+
+            task.input.value = '';
+        } else {
+            this.setState({
+                openSnakbar: true,
+                snakbarMessage: 'Already Exist'
+            })
+        }
+    }
+
+    removeTask(data, index) {
+        this.setState({
+            openDeleteDialog: true,
+            data: data
+        })
     }
 
     deleteData(id) {
         // delete data based on index
-        TaskService.remove(id);
+       Meteor.call("task.deleteTask", id, (err) => {
+            if (err != undefined) 
+                console.log(err);
+       })
         this.closeDialog();
     }
+    //
 
-    getTask() {
-        return TaskService.find({}).fetch();
-    }
 
     openDialog(row) {
         this.setState({
@@ -53,49 +124,24 @@ export default class Task extends Component {
         });
     }
 
-  
-    disableWeekends(date) {
-        return date.getDay() === 0 || date.getDay() === 6;
+    back() {
+        browserHistory.push('/person');
     }
 
-    checkField() {
-        const { task } = this.refs;
-        this.setState({
-            field: task.input.value
-        });
-    }
-
-    // ADD EDIT TASK
-    addTask() {
-
-        const { task, datestart } = this.refs;
-
-        var tasks = {
-            task: task.input.value,
-            dateStart: datestart.state.date,
-            dateFinished: null,
-            status: 'Inprogress',
-            selected: false
+    // will get all task assigned
+    componentWillMount() {
+        let name;
+        var a = PersonService.find(this.props.params._id).fetch();
+        for (var b in a) {
+            var c = a[b];
+            name = c.fullname;
         }
-
         this.setState({
-            tableData: [task, ...this.state.tableData],
-            field: ''
-        });
-
-        TaskService.insert(tasks);
-
-        task.input.value = '';
-    }
-
-    removeTask(data, index) {
-        this.setState({
-            openDeleteDialog: true,
-            data: data
+            tableData: this.props.tasks,
+            fullname: name
         })
     }
-    //
-    
+
     componentWillReceiveProps(nextProps) {
         this.setState({ tableData: nextProps.tasks })
     }
@@ -125,13 +171,21 @@ export default class Task extends Component {
                                 primary={true}
                                 fullWidth={true}
                                 onTouchTap={this.addTask.bind(this)}
-                                disabled={!this.state.field.length}
+                                disabled={this.state.field.length < 3}
                             />
                         </div>
                     </Paper>
                 </form>
 
                 <Paper zDepth={1} >
+
+                    <div style={{ display: "flex" }}>
+                        <div style={{ flex: "1" }}>
+                            <h4 style={{ margin: "10px 0 0 10px", textTransform: "uppercase" }}>{this.state.fullname}</h4>
+                        </div>
+                        <FlatButton label="Back" secondary={true} icon={<Back />} onTouchTap={this.back.bind(this)} />
+                    </div>
+
                     <Table
                         fixedHeader={true}
                         selectable={true}
@@ -176,6 +230,13 @@ export default class Task extends Component {
 
                     </Table>
                 </Paper>
+
+                <Snackbar
+                    open={this.state.openSnakbar}
+                    message={this.state.snakbarMessage}
+                    autoHideDuration={4000}
+                />
+
                 <EditTaskDialog
                     open={this.state.openTask}
                     close={this.closeDialog.bind(this)}
@@ -185,8 +246,8 @@ export default class Task extends Component {
                     open={this.state.openDeleteDialog}
                     close={this.closeDialog.bind(this)}
                     data={this.state.data}
-                    otherMessage={this.state.data.task + ' on ' + moment(this.state.data.dateStart).format("MM/DD/YYYY") }
-                    deleteSelectedTask={this.deleteData.bind(this, this.state.data._id)}
+                    otherMessage={this.state.data.task + ' on ' + moment(this.state.data.dateStart).format("MM/DD/YYYY")}
+                    deleteSelected={this.deleteData.bind(this, this.state.data._id)}
                 />
 
             </div>
